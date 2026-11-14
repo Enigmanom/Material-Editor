@@ -53,8 +53,16 @@ namespace Material_Editor
 
         private void RefreshTruePbr(CustomControl _)
         {
-            ControlFactory.UpdateVisibility();
+            RefreshTruePbrRows(_);
             Text = GetTitleText();
+        }
+
+        private void RefreshTruePbrRows(CustomControl _)
+        {
+            // One layout pass for all rows; showing them one by one stalls
+            SuspendAll();
+            ControlFactory.UpdateVisibility();
+            ResumeAll();
             OnChanged();
         }
 
@@ -104,11 +112,7 @@ namespace Material_Editor
             }
 
             var thin = section.ThinSurfaceOverride ?? new TruePbrThinSurfaceOverride();
-            ControlFactory.CreateControl(layout, ControlNames.TruePbrThinSurfaceOverride, section.ThinSurfaceOverride != null, TruePbrVisibility, (control) =>
-            {
-                ControlFactory.UpdateVisibility();
-                OnChanged();
-            });
+            ControlFactory.CreateControl(layout, ControlNames.TruePbrThinSurfaceOverride, section.ThinSurfaceOverride != null, TruePbrVisibility, RefreshTruePbrRows);
 
             bool ThinSurfaceVisibility(CustomControl _) => TruePbrOverrideVisibility(ControlNames.TruePbrThinSurfaceOverride);
 
@@ -118,11 +122,7 @@ namespace Material_Editor
             CreateTruePbrNumber(ControlNames.TruePbrThinSurfaceBackRoughness, thin.BackRoughnessScale, 0, float.PositiveInfinity, 0.01M, ThinSurfaceVisibility);
 
             var fuzz = section.FuzzOverride ?? new TruePbrFuzzOverride();
-            ControlFactory.CreateControl(layout, ControlNames.TruePbrFuzzOverride, section.FuzzOverride != null, TruePbrVisibility, (control) =>
-            {
-                ControlFactory.UpdateVisibility();
-                OnChanged();
-            });
+            ControlFactory.CreateControl(layout, ControlNames.TruePbrFuzzOverride, section.FuzzOverride != null, TruePbrVisibility, RefreshTruePbrRows);
 
             bool FuzzVisibility(CustomControl _) => TruePbrOverrideVisibility(ControlNames.TruePbrFuzzOverride);
 
