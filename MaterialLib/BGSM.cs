@@ -6,6 +6,9 @@ namespace MaterialLib
     public class BGSM : BaseMaterialFile
     {
         public const uint Signature = 0x4D534742u;
+        public const uint TruePbrFileVersion = 100;
+
+        private bool _blocksFollow;
 
         #region Fields
         protected override void SetDefaults()
@@ -46,6 +49,8 @@ namespace MaterialLib
             TessellationPnScale = 1.0f;
             TessellationBaseFactor = 1.0f;
             GrayscaleToPaletteScale = 1.0f;
+            TruePBR = null;
+            UnknownBlocks = [];
         }
         #endregion
 
@@ -316,7 +321,20 @@ namespace MaterialLib
 
         [DataMember]
         public uint UnkInt1 { get; set; }
+
+        [DataMember(Name = "TruePBR", EmitDefaultValue = false, Order = 1000)]
+        public TruePbrSection? TruePBR { get; set; }
+
+        public List<MaterialBlock> UnknownBlocks { get; private set; } = [];
         #endregion
+
+        protected override uint ReadFileVersion(uint fileVersion)
+        {
+            _blocksFollow = fileVersion == TruePbrFileVersion;
+            return _blocksFollow ? 2 : fileVersion;
+        }
+
+        public override uint FileVersion => TruePBR != null && Version <= 2 ? TruePbrFileVersion : Version;
 
         public override void Deserialize(BinaryReader input)
         {
@@ -485,10 +503,42 @@ namespace MaterialLib
                     TerrainRotationAngle = input.ReadSingle();
                 }
             }
+
+            if (_blocksFollow)
+                ReadBlocks(input);
+        }
+
+        private void ReadBlocks(BinaryReader input)
+        {
+            var blocks = MaterialBlock.ReadAll(input).ToList();
+            foreach (var tag in new[] { TruePbrSection.BlockTag, TruePbrThinSurfaceOverride.BlockTag, TruePbrFuzzOverride.BlockTag })
+            {
+                if (blocks.Count(b => b.Tag == tag) > 1)
+                    throw new FormatException($"Duplicate block '{tag}'.");
+            }
+
+            var pbr = blocks.FirstOrDefault(b => b.Tag == TruePbrSection.BlockTag)
+                ?? throw new FormatException("Missing TruePBR block.");
+
+            var section = pbr.Parse(TruePbrSection.Read);
+            foreach (var block in blocks.Where(b => b != pbr))
+            {
+                if (block.Tag == TruePbrThinSurfaceOverride.BlockTag)
+                    section.ThinSurfaceOverride = block.Parse(TruePbrThinSurfaceOverride.Read);
+                else if (block.Tag == TruePbrFuzzOverride.BlockTag)
+                    section.FuzzOverride = block.Parse(TruePbrFuzzOverride.Read);
+                else
+                    UnknownBlocks.Add(block);
+            }
+
+            TruePBR = section;
         }
 
         public override void Serialize(BinaryWriter output)
         {
+            if (TruePBR != null && Version > 2)
+                throw new InvalidOperationException("TruePBR requires a Fallout 4 material.");
+
             base.Serialize(output);
 
             WriteString(output, DiffuseTexture);
@@ -654,6 +704,23 @@ namespace MaterialLib
                     output.Write(TerrainRotationAngle);
                 }
             }
+
+            if (TruePBR != null)
+                WriteBlocks(output, TruePBR);
+        }
+
+        private void WriteBlocks(BinaryWriter output, TruePbrSection section)
+        {
+            MaterialBlock.Write(output, TruePbrSection.BlockTag, section.Write);
+
+            if (section.ThinSurfaceOverride != null)
+                MaterialBlock.Write(output, TruePbrThinSurfaceOverride.BlockTag, section.ThinSurfaceOverride.Write);
+
+            if (section.FuzzOverride != null)
+                MaterialBlock.Write(output, TruePbrFuzzOverride.BlockTag, section.FuzzOverride.Write);
+
+            foreach (var block in UnknownBlocks)
+                block.Write(output);
         }
     }
 }

@@ -34,6 +34,8 @@ namespace MaterialLib
         #region Properties
         public uint Version { get; set; }
 
+        public virtual uint FileVersion => Version;
+
         [DataMember(Name = "bTileU")]
         public bool TileU { get; set; }
 
@@ -176,6 +178,11 @@ namespace MaterialLib
             SetDefaults();
         }
 
+        protected virtual uint ReadFileVersion(uint fileVersion)
+        {
+            return fileVersion;
+        }
+
         public virtual void Deserialize(BinaryReader input)
         {
             var magic = input.ReadUInt32();
@@ -184,21 +191,18 @@ namespace MaterialLib
                 throw new FormatException();
             }
 
-            Version = input.ReadUInt32();
+            Version = ReadFileVersion(input.ReadUInt32());
 
-            var tileFlags = input.ReadUInt32();
-            TileU = (tileFlags & 2) != 0;
-            TileV = (tileFlags & 1) != 0;
+            UnpackTileFlags(input.ReadUInt32(), out var tileU, out var tileV);
+            TileU = tileU;
+            TileV = tileV;
             UOffset = input.ReadSingle();
             VOffset = input.ReadSingle();
             UScale = input.ReadSingle();
             VScale = input.ReadSingle();
 
             Alpha = input.ReadSingle();
-            var alphaBlendMode0 = input.ReadByte();
-            var alphaBlendMode1 = input.ReadUInt32();
-            var alphaBlendMode2 = input.ReadUInt32();
-            AlphaBlendMode = ConvertAlphaBlendMode(alphaBlendMode0, alphaBlendMode1, alphaBlendMode2);
+            AlphaBlendMode = ReadAlphaBlendMode(input);
             AlphaTestRef = input.ReadByte();
             AlphaTest = input.ReadBoolean();
 
@@ -236,12 +240,9 @@ namespace MaterialLib
         public virtual void Serialize(BinaryWriter output)
         {
             output.Write(_Signature);
-            output.Write(Version);
+            output.Write(FileVersion);
 
-            uint tileFlags = 0;
-            if (TileU) tileFlags += 2;
-            if (TileV) tileFlags += 1;
-            output.Write(tileFlags);
+            output.Write(PackTileFlags(TileU, TileV));
 
             output.Write(UOffset);
             output.Write(VOffset);
@@ -250,13 +251,7 @@ namespace MaterialLib
 
             output.Write(Alpha);
 
-            byte alphaBlendMode0 = 0;
-            uint alphaBlendMode1 = 0;
-            uint alphaBlendMode2 = 0;
-            ConvertAlphaBlendMode(AlphaBlendMode, ref alphaBlendMode0, ref alphaBlendMode1, ref alphaBlendMode2);
-            output.Write(alphaBlendMode0);
-            output.Write(alphaBlendMode1);
-            output.Write(alphaBlendMode2);
+            WriteAlphaBlendMode(output, AlphaBlendMode);
 
             output.Write(AlphaTestRef);
             output.Write(AlphaTest);
@@ -323,7 +318,18 @@ namespace MaterialLib
             return true;
         }
 
-        protected static string ReadString(BinaryReader input)
+        protected internal static uint PackTileFlags(bool tileU, bool tileV)
+        {
+            return (tileU ? 2u : 0u) | (tileV ? 1u : 0u);
+        }
+
+        protected internal static void UnpackTileFlags(uint flags, out bool tileU, out bool tileV)
+        {
+            tileU = (flags & 2) != 0;
+            tileV = (flags & 1) != 0;
+        }
+
+        protected internal static string ReadString(BinaryReader input)
         {
             var length = input.ReadUInt32();
             string str = new(input.ReadChars((int)length));
@@ -335,7 +341,7 @@ namespace MaterialLib
             return str;
         }
 
-        protected static void WriteString(BinaryWriter output, string? str)
+        protected internal static void WriteString(BinaryWriter output, string? str)
         {
             if (str != null)
             {
@@ -358,6 +364,25 @@ namespace MaterialLib
             Standard,
             Additive,
             Multiplicative,
+        }
+
+        protected internal static AlphaBlendModeType ReadAlphaBlendMode(BinaryReader input)
+        {
+            var a = input.ReadByte();
+            var b = input.ReadUInt32();
+            var c = input.ReadUInt32();
+            return ConvertAlphaBlendMode(a, b, c);
+        }
+
+        protected internal static void WriteAlphaBlendMode(BinaryWriter output, AlphaBlendModeType type)
+        {
+            byte a = 0;
+            uint b = 0;
+            uint c = 0;
+            ConvertAlphaBlendMode(type, ref a, ref b, ref c);
+            output.Write(a);
+            output.Write(b);
+            output.Write(c);
         }
 
         private static AlphaBlendModeType ConvertAlphaBlendMode(byte a, uint b, uint c)
@@ -422,7 +447,7 @@ namespace MaterialLib
                 throw new NotSupportedException();
         }
 
-        protected readonly struct Color(float r, float g, float b)
+        protected internal readonly struct Color(float r, float g, float b)
         {
             public readonly float R = r;
             public readonly float G = g;

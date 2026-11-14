@@ -53,6 +53,8 @@
             layoutMaterial = new System.Windows.Forms.TableLayoutPanel();
             tabPageEffect = new System.Windows.Forms.TabPage();
             layoutEffect = new System.Windows.Forms.TableLayoutPanel();
+            tabPageTruePbr = new System.Windows.Forms.TabPage();
+            layoutTruePbr = new System.Windows.Forms.TableLayoutPanel();
             textureFileDialog = new System.Windows.Forms.OpenFileDialog();
             listGame = new System.Windows.Forms.ComboBox();
             toolTip = new System.Windows.Forms.ToolTip(components);
@@ -64,6 +66,7 @@
             tabPageGeneral.SuspendLayout();
             tabPageMaterial.SuspendLayout();
             tabPageEffect.SuspendLayout();
+            tabPageTruePbr.SuspendLayout();
             SuspendLayout();
             // 
             // menuStrip
@@ -277,6 +280,33 @@
             layoutEffect.Size = new System.Drawing.Size(610, 495);
             layoutEffect.TabIndex = 1;
             // 
+            // tabPageTruePbr
+            // 
+            tabPageTruePbr.AutoScroll = true;
+            tabPageTruePbr.Controls.Add(layoutTruePbr);
+            tabPageTruePbr.Location = new System.Drawing.Point(4, 24);
+            tabPageTruePbr.Name = "tabPageTruePbr";
+            tabPageTruePbr.Padding = new System.Windows.Forms.Padding(3);
+            tabPageTruePbr.Size = new System.Drawing.Size(616, 503);
+            tabPageTruePbr.TabIndex = 3;
+            tabPageTruePbr.Text = "TruePBR";
+            tabPageTruePbr.ToolTipText = "Affects only Fallout 4 BGSM files (version 100).";
+            tabPageTruePbr.UseVisualStyleBackColor = true;
+            tabPageTruePbr.Scroll += TabScroll;
+            // 
+            // layoutTruePbr
+            // 
+            layoutTruePbr.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            layoutTruePbr.AutoSize = true;
+            layoutTruePbr.ColumnCount = 3;
+            layoutTruePbr.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            layoutTruePbr.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            layoutTruePbr.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            layoutTruePbr.Location = new System.Drawing.Point(3, 3);
+            layoutTruePbr.Name = "layoutTruePbr";
+            layoutTruePbr.Size = new System.Drawing.Size(610, 495);
+            layoutTruePbr.TabIndex = 1;
+            // 
             // textureFileDialog
             // 
             textureFileDialog.DefaultExt = "dds";
@@ -368,6 +398,8 @@
             tabPageMaterial.PerformLayout();
             tabPageEffect.ResumeLayout(false);
             tabPageEffect.PerformLayout();
+            tabPageTruePbr.ResumeLayout(false);
+            tabPageTruePbr.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -396,6 +428,8 @@
         private System.Windows.Forms.TabPage tabPageEffect;
         private System.Windows.Forms.TableLayoutPanel layoutEffect;
         private System.Windows.Forms.TableLayoutPanel layoutMaterial;
+        private System.Windows.Forms.TabPage tabPageTruePbr;
+        private System.Windows.Forms.TableLayoutPanel layoutTruePbr;
         private System.Windows.Forms.ComboBox listGame;
         private System.Windows.Forms.ToolTip toolTip;
         private System.Windows.Forms.ComboBox listMatType;

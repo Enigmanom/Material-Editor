@@ -233,6 +233,13 @@ namespace Material_Editor
             customControls.Add(label, control);
         }
 
+        public static CustomControl CreateDecimalControl(TableLayoutPanel parent, string label, decimal value, decimal minValue, decimal maxValue, decimal increment, Func<CustomControl, bool> visibilityCallback = null, Action<CustomControl> changedCallback = null)
+        {
+            var control = NumberControl.ForDecimal(label, visibilityCallback, changedCallback ?? DefaultChangedCallback, value, 5, increment, minValue, maxValue);
+            AddCustomControl(parent, label, control);
+            return control;
+        }
+
         public static CustomControl CreateDropdownControl(TableLayoutPanel parent, string label, object[] entries, int selection, Func<CustomControl, bool> visibilityCallback = null, Action<CustomControl> changedCallback = null)
         {
             var control = new DropdownControl(label, visibilityCallback, changedCallback ?? DefaultChangedCallback, entries, selection);

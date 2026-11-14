@@ -40,6 +40,21 @@ namespace MaterialLib.Tests
         }
 
         [Fact]
+        public void Resave_V2_BGSM_IsByteIdentical()
+        {
+            const string filePath = @"Files/Version 2/Default.bgsm";
+
+            var original = File.ReadAllBytes(filePath);
+            var bgsm = DeserializeBGSM(filePath);
+
+            using var stream = new MemoryStream();
+            using (var writer = new BinaryWriter(stream))
+                bgsm.Serialize(writer);
+
+            Assert.Equal(original, stream.ToArray());
+        }
+
+        [Fact]
         public void Deserialize_V2_BGEM_Default()
         {
             const string filePath = @"Files/Version 2/DefaultEffect.bgem";

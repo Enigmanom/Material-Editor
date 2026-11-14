@@ -1,4 +1,6 @@
-﻿namespace Material_Editor
+﻿using MaterialLib;
+
+namespace Material_Editor
 {
     public class ControlNames
     {
@@ -144,5 +146,39 @@
         public const string AdaptativeEmissiveFinalExposureMax = "Adaptative Em. Final Exp. Max";
         public const string EffectGlowmap = "Effect Glowmap";
         public const string EffectPBRSpecular = "Effect PBR Specular";
+
+        public const string TruePbrEnabled = "TruePBR";
+        public const string TruePbrTileU = "PBR Tile U";
+        public const string TruePbrTileV = "PBR Tile V";
+        public const string TruePbrOffsetU = "PBR Offset U";
+        public const string TruePbrOffsetV = "PBR Offset V";
+        public const string TruePbrScaleU = "PBR Scale U";
+        public const string TruePbrScaleV = "PBR Scale V";
+        public const string TruePbrAlpha = "PBR Alpha";
+        public const string TruePbrAlphaBlendMode = "PBR Alpha Blend Mode";
+        public const string TruePbrAlphaTestReference = "PBR Alpha Test Reference";
+        public const string TruePbrAlphaTest = "PBR Alpha Test";
+        public const string TruePbrRefraction = "PBR Refraction";
+        public const string TruePbrRefractionFalloff = "PBR Refraction Falloff";
+        public const string TruePbrRefractionPower = "PBR Refraction Power";
+        public const string TruePbrModelSpaceNormals = "PBR Model Space Normals";
+        public const string TruePbrEmissive = "PBR Emissive";
+        public const string TruePbrEmissiveColorR = "PBR Emissive Color R";
+        public const string TruePbrEmissiveColorG = "PBR Emissive Color G";
+        public const string TruePbrEmissiveColorB = "PBR Emissive Color B";
+        public const string TruePbrEmissiveScale = "PBR Emissive Scale";
+        public const string TruePbrExternalEmittance = "PBR External Emittance";
+        public const string TruePbrThinSurfaceOverride = "PBR Thin Surface Override";
+        public const string TruePbrThinSurfaceBalance = "PBR Thin Surface Balance";
+        public const string TruePbrThinSurfaceFrontSpecular = "PBR Thin Front Specular Weight";
+        public const string TruePbrThinSurfaceBackSpecular = "PBR Thin Back Specular Weight";
+        public const string TruePbrThinSurfaceBackRoughness = "PBR Thin Back Roughness Scale";
+        public const string TruePbrFuzzOverride = "PBR Fuzz Override";
+        public const string TruePbrFuzzRoughness = "PBR Fuzz Roughness";
+        public const string TruePbrFuzzRoughnessFromDisplacement = "PBR Fuzz Roughness From Displacement G";
+
+        public static string TruePbrTexture(TruePbrTextureSlot slot) => $"PBR {slot.Label} Texture";
+        public static string TruePbrFeature(TruePbrFeature feature) => $"PBR {feature.Label}";
+        public static string TruePbrParameter(TruePbrParameter parameter, int component) => $"PBR {parameter.ComponentLabel(component)}";
     }
 }

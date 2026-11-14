@@ -93,6 +93,7 @@ namespace Material_Editor
             layoutGeneral.Enabled = true;
             layoutMaterial.Enabled = true;
             layoutEffect.Enabled = true;
+            layoutTruePbr.Enabled = true;
 
             SuspendAll();
 
@@ -136,9 +137,14 @@ namespace Material_Editor
 
         private void SaveToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            Save();
+        }
+
+        private bool Save()
+        {
             if (string.IsNullOrEmpty(workFilePath))
             {
-                SaveAsToolStripMenuItem_Click(null, null);
+                return SaveAs();
             }
 
             BaseMaterialFile material = CurrentMaterialType switch
@@ -147,6 +153,8 @@ namespace Material_Editor
                 _ => new BGSM(),
             };
             GetMaterialValues(material);
+            if (!ConfirmTruePbrSave(material))
+                return false;
 
             try
             {
@@ -177,22 +185,28 @@ namespace Material_Editor
                     if (!material.Save(file))
                     {
                         MessageBox.Show(string.Format("Failed to save file '{0}'!", workFilePath), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
+                        return false;
                     }
                 }
             }
             catch
             {
                 MessageBox.Show(string.Format("Failed to save file '{0}'!", workFilePath), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                return false;
             }
 
             currentMaterial = material;
             Text = GetTitleText();
             changed = false;
+            return true;
         }
 
         private void SaveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveAs();
+        }
+
+        private bool SaveAs()
         {
             var matType = CurrentMaterialType;
             saveFileDialog.Filter = matType switch
@@ -217,6 +231,8 @@ namespace Material_Editor
                     material = new BGSM();
 
                 GetMaterialValues(material);
+                if (!ConfirmTruePbrSave(material))
+                    return false;
 
                 try
                 {
@@ -247,14 +263,14 @@ namespace Material_Editor
                         if (!material.Save(file))
                         {
                             MessageBox.Show(string.Format("Failed to save file '{0}'!", filePath), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return;
+                            return false;
                         }
                     }
                 }
                 catch
                 {
                     MessageBox.Show(string.Format("Failed to save file '{0}'!", filePath), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
+                    return false;
                 }
 
                 workFilePath = filePath;
@@ -264,7 +280,10 @@ namespace Material_Editor
                 currentMaterial = material;
                 Text = GetTitleText();
                 changed = false;
+                return true;
             }
+
+            return false;
         }
 
         private void CloseToolStripMenuItem_Click(object sender, EventArgs e)
@@ -278,6 +297,7 @@ namespace Material_Editor
             layoutGeneral.Enabled = false;
             layoutMaterial.Enabled = false;
             layoutEffect.Enabled = false;
+            layoutTruePbr.Enabled = false;
 
             SuspendAll();
             ControlFactory.ClearControls();
@@ -345,6 +365,7 @@ namespace Material_Editor
                 SuspendAll();
                 FillVersionDropdown();
                 ControlFactory.UpdateVisibility();
+                UpdateTruePbrTab();
                 ResumeAll();
 
                 OnChanged();
@@ -353,6 +374,7 @@ namespace Material_Editor
 
         private void ListMatType_SelectedIndexChanged(object sender, EventArgs e)
         {
+            tabControl.TabPages.Remove(tabPageTruePbr);
             tabControl.TabPages.Remove(tabPageMaterial);
             tabControl.TabPages.Remove(tabPageEffect);
 
@@ -367,6 +389,8 @@ namespace Material_Editor
                     tabControl.SelectTab(tabPageEffect);
                     break;
             }
+
+            UpdateTruePbrTab();
 
             string filePath = ChangeFileExtension(workFilePath);
             if (filePath != workFilePath)
@@ -465,6 +489,7 @@ namespace Material_Editor
             layoutGeneral.SuspendLayout();
             layoutMaterial.SuspendLayout();
             layoutEffect.SuspendLayout();
+            layoutTruePbr.SuspendLayout();
         }
 
         private void ResumeAll()
@@ -473,6 +498,7 @@ namespace Material_Editor
             layoutGeneral.ResumeLayout();
             layoutMaterial.ResumeLayout();
             layoutEffect.ResumeLayout();
+            layoutTruePbr.ResumeLayout();
         }
 
         private void TabScroll(object sender, ScrollEventArgs e)
@@ -601,7 +627,8 @@ namespace Material_Editor
 
                 if (res == DialogResult.Yes)
                 {
-                    SaveToolStripMenuItem_Click(null, null);
+                    if (!Save())
+                        e.Cancel = true;
                 }
                 else if (res == DialogResult.Cancel)
                 {
@@ -644,7 +671,7 @@ namespace Material_Editor
         private string GetTitleText()
         {
             if (currentMaterial != null)
-                return $"{WorkFileName} (Version {currentMaterial.Version})";
+                return $"{WorkFileName} (Version {TitleVersion})";
             else
                 return $"{WorkFileName}";
         }
@@ -1100,7 +1127,10 @@ namespace Material_Editor
             ControlFactory.CreateControl(layoutEffect, ControlNames.EffectGlowmap, bgem.Glowmap, (control) => { return file.Version >= 16; });
             ControlFactory.CreateControl(layoutEffect, ControlNames.EffectPBRSpecular, bgem.EffectPbrSpecular, (control) => { return file.Version >= 20; });
 
+            CreateTruePbrControls(bgsm, fileFont);
+
             CreateTooltips();
+            CreateTruePbrTooltips();
             ControlFactory.UpdateVisibility();
         }
 
@@ -1593,6 +1623,11 @@ namespace Material_Editor
 
                 control = ControlFactory.Find(ControlNames.TerrainRotationAngle);
                 if (control != null) bgsm.TerrainRotationAngle = Convert.ToSingle(control.GetProperty());
+
+                bgsm.TruePBR = ReadTruePbrSection(file.Version);
+
+                if (currentMaterial is BGSM current)
+                    bgsm.UnknownBlocks.AddRange(current.UnknownBlocks);
             }
             else if (file.GetType() == typeof(BGEM))
             {
@@ -1779,6 +1814,7 @@ namespace Material_Editor
             layoutGeneral.Enabled = true;
             layoutMaterial.Enabled = true;
             layoutEffect.Enabled = true;
+            layoutTruePbr.Enabled = true;
 
             Text = GetTitleText();
             changed = false;
