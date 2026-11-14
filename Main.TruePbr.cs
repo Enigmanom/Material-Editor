@@ -204,6 +204,12 @@ namespace Material_Editor
 
         private bool ConfirmTruePbrSave(BaseMaterialFile material)
         {
+            if (material is BGSM { Version: > 2 } && TruePbrEnabled)
+            {
+                return MessageBox.Show("The TruePBR section is only stored in Fallout 4 materials and will not be saved. Continue?",
+                    "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) == DialogResult.OK;
+            }
+
             if (material is not BGSM { TruePBR: { } section })
                 return true;
 
